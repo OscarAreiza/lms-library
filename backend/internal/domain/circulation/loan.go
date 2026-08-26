@@ -5,6 +5,8 @@ package circulation
 import (
 	"errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // LoanPeriodDays and SuspensionDays are the confirmed v1 policy constants —
@@ -24,6 +26,9 @@ const (
 
 // ErrLoanAlreadyReturned — INV-005: a loan can only be returned once.
 var ErrLoanAlreadyReturned = errors.New("loan already returned")
+
+// ErrLoanNotFound is the port-level "not found" error.
+var ErrLoanNotFound = errors.New("loan not found")
 
 // Loan is the Circulation bounded context's Aggregate Root.
 type Loan struct {
@@ -46,6 +51,7 @@ type Loan struct {
 func NewLoan(studentID, bookID string) *Loan {
 	now := time.Now().UTC()
 	return &Loan{
+		ID:        uuid.NewString(),
 		StudentID: studentID,
 		BookID:    bookID,
 		LoanDate:  now,
