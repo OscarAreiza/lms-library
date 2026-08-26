@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { StudentsListPage } from './pages/students/StudentsListPage'
 import { BooksListPage } from './pages/books/BooksListPage'
 import { LoansListPage } from './pages/loans/LoansListPage'
+import { LoanFormPage } from './pages/loans/LoanFormPage'
 import { OverdueLoansPage } from './pages/loans/OverdueLoansPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/students" element={<ProtectedRoute><StudentsListPage /></ProtectedRoute>} />
         <Route path="/books" element={<ProtectedRoute><BooksListPage /></ProtectedRoute>} />
         <Route path="/loans" element={<ProtectedRoute><LoansListPage /></ProtectedRoute>} />
+        <Route path="/loans/new" element={<ProtectedRoute><LoanFormPage /></ProtectedRoute>} />
         <Route path="/loans/overdue" element={<ProtectedRoute><OverdueLoansPage /></ProtectedRoute>} />
 
         <Route path="*" element={<NotFoundPage />} />
