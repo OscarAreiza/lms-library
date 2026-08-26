@@ -11,8 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/backend/internal/config"
+	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/auth"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http"
+	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/handler"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/logger"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/postgres"
 )
@@ -47,10 +50,16 @@ func run() error {
 	}
 	defer pool.Close()
 
+	administratorRepo := postgres.NewAdministratorRepository(pool)
+	tokenIssuer := auth.NewJWTIssuer(cfg.JWTSecret, cfg.JWTExpiry)
+	loginUseCase := usecase.NewLogin(administratorRepo, tokenIssuer)
+	authHandler := handler.NewAuthHandler(loginUseCase)
+
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
 		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
+		Auth:       authHandler,
 	})
 
 	srv := &http.Server{

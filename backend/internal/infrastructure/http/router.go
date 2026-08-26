@@ -15,9 +15,10 @@ import (
 // (students, books, loans) are added here incrementally as each HU is implemented —
 // see library-docs/07-api/contracts/openapi/library-api.yaml for the full contract.
 type RouterConfig struct {
-	DB            *pgxpool.Pool
-	JWTSecret     string
-	CORSOrigin    string
+	DB         *pgxpool.Pool
+	JWTSecret  string
+	CORSOrigin string
+	Auth       *handler.AuthHandler
 }
 
 // NewRouter builds the chi router with the base middleware stack and health
@@ -35,7 +36,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/health/ready", health.Readiness)
 
 	r.Route("/api/v1", func(api chi.Router) {
-		// Public: POST /auth/login (added when HU-01 is implemented).
+		api.Post("/auth/login", cfg.Auth.Login) // HU-01 — public
 
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
