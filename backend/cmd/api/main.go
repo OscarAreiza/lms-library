@@ -11,8 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/backend/internal/config"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http"
+	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/handler"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/logger"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/postgres"
 )
@@ -47,10 +49,16 @@ func run() error {
 	}
 	defer pool.Close()
 
+	bookRepo := postgres.NewBookRepository(pool)
+	createBookUseCase := usecase.NewCreateBook(bookRepo)
+	searchBooksUseCase := usecase.NewSearchBooks(bookRepo)
+	bookHandler := handler.NewBookHandler(createBookUseCase, searchBooksUseCase)
+
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
 		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
+		Books:      bookHandler,
 	})
 
 	srv := &http.Server{
