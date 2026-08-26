@@ -1,20 +1,50 @@
-# Frontend
+# Frontend — LMS Administrator Panel
 
-Interfaz web del sistema de gestión de biblioteca (LMS), consumida por el administrador único del sistema para gestionar libros, estudiantes, préstamos, devoluciones y penalizaciones.
+React SPA consumed by the library's single Administrator to manage the catalog, students,
+loans, returns, and penalties.
 
 ## Tech Stack
 
-* **Framework:** React.js
+* **Framework:** React 19 + TypeScript
+* **Build tool:** Vite
+* **Styling:** Tailwind CSS v4
+* **Routing:** React Router
+* **HTTP client:** axios
 
-## Contenido
+## Structure
 
-* `Dockerfile`: define la imagen del frontend (build multi-stage con Node.js, servida con Nginx) usada por el `docker-compose.yml` de la raíz del proyecto.
-* Código fuente de la aplicación (a agregar).
+```
+src/
+├── components/
+│   ├── layout/     → AppLayout (sidebar/topbar), ProtectedRoute
+│   └── ui/         → Button, Card, EmptyState — shared components
+├── lib/
+│   ├── api.ts       → axios instance (attaches JWT, handles 401)
+│   └── auth.ts       → token storage
+├── pages/            → one folder per screen area (students/, books/, loans/)
+├── types/             → TS types mirroring the OpenAPI contract
+└── App.tsx             → route tree (see library-docs/12-ux-ui/navigation-map.md)
+```
 
-## Desarrollo local
+Placeholder screens show an "Implemented in HU-XX" badge — real content, forms, and data
+fetching land on the `feat/HU-XX-...` branch that implements each user story.
 
-El frontend se construye y levanta junto con el resto de servicios (backend y base de datos) desde la raíz del repositorio:
+## Development
+
+```bash
+npm install
+cp .env.example .env   # set VITE_API_BASE_URL if not using the default
+npm run dev
+```
+
+Or, with the rest of the stack, from the repo root:
 
 ```bash
 docker compose up --build frontend
 ```
+
+## Correlations
+
+* Navigation map / access rules → `library-docs/12-ux-ui/navigation-map.md`
+* Design tokens (colors/typography — finalized here, in code) → `src/index.css`
+* API contract this UI calls → `library-docs/07-api/contracts/openapi/library-api.yaml`
