@@ -11,8 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/backend/internal/config"
+	domainservice "github.com/OscarAreiza/lms-library/backend/internal/domain/service"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http"
+	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/handler"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/logger"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/postgres"
 )
@@ -47,10 +50,20 @@ func run() error {
 	}
 	defer pool.Close()
 
+	studentRepo := postgres.NewStudentRepository(pool)
+	bookRepo := postgres.NewBookRepository(pool)
+	loanRepo := postgres.NewLoanRepository(pool)
+
+	loanRegistrationService := domainservice.NewLoanRegistrationService(studentRepo, bookRepo, loanRepo)
+	returnLoanUseCase := usecase.NewReturnLoan(loanRegistrationService)
+	searchLoansUseCase := usecase.NewSearchLoans(loanRepo)
+	loanHandler := handler.NewLoanHandler(returnLoanUseCase, searchLoansUseCase)
+
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
 		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
+		Loans:      loanHandler,
 	})
 
 	srv := &http.Server{

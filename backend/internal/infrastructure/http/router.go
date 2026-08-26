@@ -15,9 +15,10 @@ import (
 // (students, books, loans) are added here incrementally as each HU is implemented —
 // see library-docs/07-api/contracts/openapi/library-api.yaml for the full contract.
 type RouterConfig struct {
-	DB            *pgxpool.Pool
-	JWTSecret     string
-	CORSOrigin    string
+	DB         *pgxpool.Pool
+	JWTSecret  string
+	CORSOrigin string
+	Loans      *handler.LoanHandler
 }
 
 // NewRouter builds the chi router with the base middleware stack and health
@@ -39,8 +40,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
-			// Protected module routes (students, books, loans) are mounted here
-			// as each HU lands — see 07-api/contracts/openapi/library-api.yaml.
+
+			protected.Route("/loans", func(loans chi.Router) {
+				loans.Get("/", cfg.Loans.List)               // HU-07
+				loans.Post("/{id}/return", cfg.Loans.Return) // HU-07
+			})
 		})
 	})
 
