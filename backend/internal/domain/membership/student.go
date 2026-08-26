@@ -7,12 +7,18 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/OscarAreiza/lms-library/backend/internal/domain/shared"
 )
 
 // ErrStudentHasActiveLoansOrSuspension — INV-002: a student with active loans or an
 // active suspension cannot be deactivated (library-docs/02-domain/entities-and-rules.md).
 var ErrStudentHasActiveLoansOrSuspension = errors.New("student has active loans or an active suspension")
+
+// ErrStudentNotFound is the port-level "not found" error (see AdministratorRepository
+// for why use cases depend on this, not an infrastructure error type).
+var ErrStudentNotFound = errors.New("student not found")
 
 // Student is the Membership bounded context's Aggregate Root.
 type Student struct {
@@ -38,6 +44,7 @@ func NewStudent(fullName, documentID string, email shared.Email, phone string) (
 
 	now := time.Now().UTC()
 	return &Student{
+		ID:         uuid.NewString(),
 		FullName:   fullName,
 		DocumentID: documentID,
 		Email:      email,
