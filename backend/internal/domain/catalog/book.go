@@ -5,6 +5,8 @@ package catalog
 import (
 	"errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // ErrNoCopiesAvailable — INV-001: a loan is rejected if it would make availableCopies negative.
@@ -13,6 +15,9 @@ var ErrNoCopiesAvailable = errors.New("no copies available")
 // ErrWouldExceedTotalCopies — INV-001: a return is rejected if it would make
 // availableCopies exceed totalCopies.
 var ErrWouldExceedTotalCopies = errors.New("return would exceed total copies")
+
+// ErrBookNotFound is the port-level "not found" error.
+var ErrBookNotFound = errors.New("book not found")
 
 // Book is the Catalog bounded context's Aggregate Root.
 // There is no separate Copy entity in v1 — see
@@ -45,6 +50,7 @@ func NewBook(title, author, isbn, category string, year, totalCopies int) (*Book
 
 	now := time.Now().UTC()
 	return &Book{
+		ID:              uuid.NewString(),
 		Title:           title,
 		Author:          author,
 		ISBN:            isbn,
