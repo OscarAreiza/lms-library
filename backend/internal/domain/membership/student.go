@@ -16,8 +16,8 @@ import (
 // active suspension cannot be deactivated (library-docs/02-domain/entities-and-rules.md).
 var ErrStudentHasActiveLoansOrSuspension = errors.New("student has active loans or an active suspension")
 
-// ErrStudentNotFound is the port-level "not found" error (see access package for why
-// use cases depend on this, not an infrastructure error type).
+// ErrStudentNotFound is the port-level "not found" error (see AdministratorRepository
+// for why use cases depend on this, not an infrastructure error type).
 var ErrStudentNotFound = errors.New("student not found")
 
 // Student is the Membership bounded context's Aggregate Root.

@@ -30,6 +30,8 @@ func scanStudent(row pgx.Row) (*membership.Student, error) {
 	if err := row.Scan(&s.ID, &s.FullName, &s.DocumentID, &email, &s.Phone, &s.SuspendedUntil, &s.DeactivatedAt, &s.CreatedAt, &s.UpdatedAt); err != nil {
 		return nil, err
 	}
+	// Already validated on the way in (NewStudent) — re-parsing here just
+	// rehydrates the Value Object, it cannot fail for a row we wrote ourselves.
 	e, _ := shared.NewEmail(email)
 	s.Email = e
 	return &s, nil

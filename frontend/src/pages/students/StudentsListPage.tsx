@@ -74,7 +74,7 @@ export function StudentsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Students</h1>
-          <p className="text-sm text-slate-500">Search, edit, and deactivate student records.</p>
+          <p className="text-sm text-slate-500">Search, register, edit, and deactivate student records.</p>
         </div>
         <Link to="/students/new">
           <Button>Register student</Button>
