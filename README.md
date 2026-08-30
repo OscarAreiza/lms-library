@@ -57,6 +57,4 @@ docker compose up -d --build
 curl http://localhost:8080/health
 ```
 
-See [`SETUP.md`](SETUP.md) for the full setup guide (environment variables, services/images,
-troubleshooting) and `backend/README.md` / `frontend/README.md` for running each service
-outside Docker.
+See `backend/README.md` and `frontend/README.md` for running each service outside Docker.
