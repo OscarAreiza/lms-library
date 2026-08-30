@@ -49,6 +49,10 @@ func run() error {
 	}
 	defer pool.Close()
 
+	bookRepo := postgres.NewBookRepository(pool)
+	createBookUseCase := usecase.NewCreateBook(bookRepo)
+	bookHandler := handler.NewBookHandler(createBookUseCase)
+
 	studentRepo := postgres.NewStudentRepository(pool)
 	createStudentUseCase := usecase.NewCreateStudent(studentRepo)
 	studentHandler := handler.NewStudentHandler(createStudentUseCase)
@@ -57,6 +61,7 @@ func run() error {
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
 		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
+		Books:      bookHandler,
 		Students:   studentHandler,
 	})
 
