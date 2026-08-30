@@ -19,6 +19,7 @@ type RouterConfig struct {
 	JWTSecret  string
 	CORSOrigin string
 	Books      *handler.BookHandler
+	Students   *handler.StudentHandler
 }
 
 // NewRouter builds the chi router with the base middleware stack and health
@@ -41,7 +42,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
-			protected.Post("/books", cfg.Books.Create) // HU-04
+			protected.Post("/books", cfg.Books.Create)       // HU-04
+			protected.Post("/students", cfg.Students.Create) // HU-02
 		})
 	})
 

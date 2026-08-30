@@ -53,11 +53,16 @@ func run() error {
 	createBookUseCase := usecase.NewCreateBook(bookRepo)
 	bookHandler := handler.NewBookHandler(createBookUseCase)
 
+	studentRepo := postgres.NewStudentRepository(pool)
+	createStudentUseCase := usecase.NewCreateStudent(studentRepo)
+	studentHandler := handler.NewStudentHandler(createStudentUseCase)
+
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
 		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
 		Books:      bookHandler,
+		Students:   studentHandler,
 	})
 
 	srv := &http.Server{
