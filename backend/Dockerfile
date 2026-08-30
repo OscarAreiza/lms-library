@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM golang:1.25-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
@@ -10,14 +10,11 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/api
 
 # ---- Run stage ----
-FROM alpine:3.21
-
-RUN apk add --no-cache ca-certificates
+FROM alpine:3.19
 
 WORKDIR /app
 
 COPY --from=builder /app/server .
-COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
