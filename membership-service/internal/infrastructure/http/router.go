@@ -42,6 +42,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 				students.Get("/{id}", cfg.Students.Get)                    // needed by circulation-service
 				students.Patch("/{id}", cfg.Students.Update)               // HU-03
 				students.Post("/{id}/deactivate", cfg.Students.Deactivate) // HU-03
+				students.Post("/{id}/suspend", cfg.Students.Suspend)       // needed by circulation-service
 			})
 		})
 	})

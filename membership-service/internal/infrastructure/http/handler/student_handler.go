@@ -22,6 +22,7 @@ type StudentHandler struct {
 	updateStudent     *usecase.UpdateStudent
 	deactivateStudent *usecase.DeactivateStudent
 	searchStudents    *usecase.SearchStudents
+	suspendStudent    *usecase.SuspendStudent
 }
 
 func NewStudentHandler(
@@ -30,6 +31,7 @@ func NewStudentHandler(
 	updateStudent *usecase.UpdateStudent,
 	deactivateStudent *usecase.DeactivateStudent,
 	searchStudents *usecase.SearchStudents,
+	suspendStudent *usecase.SuspendStudent,
 ) *StudentHandler {
 	return &StudentHandler{
 		createStudent:     createStudent,
@@ -37,6 +39,7 @@ func NewStudentHandler(
 		updateStudent:     updateStudent,
 		deactivateStudent: deactivateStudent,
 		searchStudents:    searchStudents,
+		suspendStudent:    suspendStudent,
 	}
 }
 
@@ -51,6 +54,10 @@ type updateStudentRequest struct {
 	FullName string `json:"fullName"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
+}
+
+type suspendStudentRequest struct {
+	Days int `json:"days"`
 }
 
 type studentResponse struct {
@@ -201,6 +208,32 @@ func (h *StudentHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, membership.ErrStudentHasActiveLoansOrSuspension):
 		response.Error(w, http.StatusConflict, "STUDENT_HAS_ACTIVE_LOANS_OR_SUSPENSION",
 			"This student cannot be deactivated while they have active loans or an active suspension", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toStudentResponse(student))
+}
+
+// Suspend — POST /students/{id}/suspend. Called by circulation-service when
+// a return is late (HU-08, INV-006) — not part of the public UI-facing
+// contract.
+func (h *StudentHandler) Suspend(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	var req suspendStudentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request body", correlationID)
+		return
+	}
+
+	student, err := h.suspendStudent.Execute(r.Context(), id, req.Days)
+	switch {
+	case errors.Is(err, membership.ErrStudentNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Student not found", correlationID)
 		return
 	case err != nil:
 		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)

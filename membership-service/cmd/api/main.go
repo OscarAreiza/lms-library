@@ -58,7 +58,8 @@ func run() error {
 	updateStudentUseCase := usecase.NewUpdateStudent(studentRepo)
 	deactivateStudentUseCase := usecase.NewDeactivateStudent(studentRepo, circulationClient)
 	searchStudentsUseCase := usecase.NewSearchStudents(studentRepo)
-	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase, updateStudentUseCase, deactivateStudentUseCase, searchStudentsUseCase)
+	suspendStudentUseCase := usecase.NewSuspendStudent(studentRepo)
+	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase, updateStudentUseCase, deactivateStudentUseCase, searchStudentsUseCase, suspendStudentUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
