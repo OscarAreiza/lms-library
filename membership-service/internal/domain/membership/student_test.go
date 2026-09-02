@@ -3,8 +3,8 @@ package membership_test
 import (
 	"testing"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/membership"
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/shared"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/membership"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/shared"
 )
 
 func mustEmail(t *testing.T, raw string) shared.Email {

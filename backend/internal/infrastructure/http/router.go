@@ -12,14 +12,14 @@ import (
 )
 
 // RouterConfig carries what the router needs to wire itself. Per-module routes
-// (students, books, loans) are added here incrementally as each HU is implemented —
-// see library-docs/07-api/contracts/openapi/library-api.yaml for the full contract.
+// are added here incrementally as each domain that hasn't yet moved to its own
+// microservice is implemented — see
+// library-docs/07-api/contracts/openapi/library-api.yaml for the full contract.
 type RouterConfig struct {
 	DB         *pgxpool.Pool
 	JWTSecret  string
 	CORSOrigin string
 	Books      *handler.BookHandler
-	Students   *handler.StudentHandler
 }
 
 // NewRouter builds the chi router with the base middleware stack and health
@@ -37,13 +37,10 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Get("/health/ready", health.Readiness)
 
 	r.Route("/api/v1", func(api chi.Router) {
-		// Public: POST /auth/login (added when HU-01 is implemented).
-
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
-			protected.Post("/books", cfg.Books.Create)       // HU-04
-			protected.Post("/students", cfg.Students.Create) // HU-02
+			protected.Post("/books", cfg.Books.Create) // HU-04
 		})
 	})
 

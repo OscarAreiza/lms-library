@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/membership"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/application/usecase"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/membership"
 )
 
 // fakeStudentRepository — Fake test double (11-quality/tdd-guide.md).

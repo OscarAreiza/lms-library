@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/shared"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/shared"
 )
 
 // ErrStudentHasActiveLoansOrSuspension — INV-002: a student with active loans or an

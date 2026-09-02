@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/membership"
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/shared"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/membership"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/shared"
 )
 
 // StudentRepository implements membership.StudentRepository against

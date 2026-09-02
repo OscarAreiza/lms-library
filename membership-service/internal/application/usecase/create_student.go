@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/membership"
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/shared"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/membership"
+	"github.com/OscarAreiza/lms-library/membership-service/internal/domain/shared"
 )
 
 // ErrDocumentIDAlreadyExists — FR-004: rejects registration when the document ID

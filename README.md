@@ -25,12 +25,11 @@ returns, and penalties through a single-administrator interface.
 ## 📁 Structure
 
 ```
-access-service/  → Go API for the Access domain (HU-01, login) — first service extracted
-                    out of the monolith into its own microservice
-backend/         → Go API (hexagonal) for every other domain not yet extracted
-                    (students, books, loans)
-frontend/        → React SPA (Administrator panel)
-infra/           → Reverse-proxy (NGINX API gateway) and deployment config
+access-service/      → Go API for the Access domain (HU-01, login)
+membership-service/  → Go API for the Membership domain (HU-02, students)
+backend/             → Go API (hexagonal) for every domain not yet extracted (books, loans)
+frontend/            → React SPA (Administrator panel)
+infra/               → Reverse-proxy (NGINX API gateway) and deployment config
 ```
 
 The migration to microservices is in progress: each domain moves out of `backend/` into its

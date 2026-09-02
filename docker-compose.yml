@@ -62,8 +62,71 @@ services:
     networks:
       - lms-network
 
-  # ---- Everything else (students, books) — still the monolith until its
-  # own extraction PR lands ----
+  # ---- Membership domain (HU-02) ----
+  membership-db:
+    image: postgres:16-alpine
+    container_name: membership-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      POSTGRES_DB: membership_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d membership_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - membership-db-data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  membership-migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: membership-migrate
+    volumes:
+      - ./membership-service/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@membership-db:5432/membership_db?sslmode=disable"
+      - "up"
+    depends_on:
+      membership-db:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  membership-service:
+    build:
+      context: ./membership-service
+      dockerfile: Dockerfile
+    container_name: membership-service
+    environment:
+      DB_HOST: membership-db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-lms_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      DB_NAME: membership_db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      membership-db:
+        condition: service_healthy
+      membership-migrate:
+        condition: service_completed_successfully
+    networks:
+      - lms-network
+
+  # ---- Everything else (books) — still the monolith until its own
+  # extraction PR lands ----
   db:
     image: postgres:16-alpine
     container_name: lms-db
@@ -135,6 +198,7 @@ services:
       - "8080:8080"
     depends_on:
       - access-service
+      - membership-service
       - backend
     networks:
       - lms-network
@@ -155,6 +219,7 @@ services:
 
 volumes:
   access-db-data:
+  membership-db-data:
   lms-db-data:
 
 networks:
