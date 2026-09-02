@@ -29,7 +29,38 @@ func NewClient(baseURL, jwtSecret string) *Client {
 }
 
 type studentResponse struct {
+	ID             string  `json:"id"`
 	SuspendedUntil *string `json:"suspendedUntil,omitempty"`
+}
+
+// ResolveByDocumentID translates the identifier an Administrator actually
+// has on hand (the student's document ID) into the internal UUID the domain
+// operates on — an Administrator has no way to know the UUID
+// (library-docs/09-microservices/data-ownership-matrix.md).
+func (c *Client) ResolveByDocumentID(ctx context.Context, documentID string) (string, error) {
+	req, err := c.newRequest(ctx, http.MethodGet, fmt.Sprintf("/api/v1/students/by-document/%s", documentID), nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("calling membership-service: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", ErrStudentNotFound
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("membership-service returned %d", resp.StatusCode)
+	}
+
+	var body studentResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return "", fmt.Errorf("decoding membership-service response: %w", err)
+	}
+	return body.ID, nil
 }
 
 // IsEligible mirrors membership.Student.IsEligibleForLoan — a student with no

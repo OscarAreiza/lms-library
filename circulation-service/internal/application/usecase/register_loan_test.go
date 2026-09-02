@@ -16,6 +16,12 @@ type fakeStudentClient struct {
 	eligible map[string]bool
 }
 
+// ResolveByDocumentID is a passthrough in these tests — the fixture data
+// uses the same string for both the "document ID" and the internal ID, so
+// the resolution step doesn't need its own separate mapping.
+func (f *fakeStudentClient) ResolveByDocumentID(_ context.Context, documentID string) (string, error) {
+	return documentID, nil
+}
 func (f *fakeStudentClient) IsEligible(_ context.Context, studentID string) (bool, error) {
 	eligible, ok := f.eligible[studentID]
 	if !ok {
@@ -29,6 +35,11 @@ type fakeBookClient struct {
 	availableCopies map[string]int
 }
 
+// ResolveByISBN is a passthrough in these tests, for the same reason as
+// fakeStudentClient.ResolveByDocumentID above.
+func (f *fakeBookClient) ResolveByISBN(_ context.Context, isbn string) (string, error) {
+	return isbn, nil
+}
 func (f *fakeBookClient) LoanCopy(_ context.Context, bookID string) error {
 	if f.availableCopies[bookID] <= 0 {
 		return catalogErrNoCopiesAvailable
@@ -74,7 +85,7 @@ func TestRegisterLoan_Succeeds(t *testing.T) {
 	loans := &fakeLoanRepo{active: map[string]int{}}
 
 	svc := service.NewLoanRegistrationService(students, books, loans)
-	uc := usecase.NewRegisterLoan(svc)
+	uc := usecase.NewRegisterLoan(students, books, svc)
 
 	loan, err := uc.Execute(context.Background(), "student-1", "book-1")
 	if err != nil {
@@ -94,7 +105,7 @@ func TestRegisterLoan_RejectsSuspendedStudent(t *testing.T) {
 	loans := &fakeLoanRepo{active: map[string]int{}}
 
 	svc := service.NewLoanRegistrationService(students, books, loans)
-	uc := usecase.NewRegisterLoan(svc)
+	uc := usecase.NewRegisterLoan(students, books, svc)
 
 	_, err := uc.Execute(context.Background(), "student-1", "book-1")
 	if err != service.ErrStudentSuspended {
@@ -108,7 +119,7 @@ func TestRegisterLoan_RejectsWhenLoanLimitReached(t *testing.T) {
 	loans := &fakeLoanRepo{active: map[string]int{"student-1": circulation.MaxActiveLoans}}
 
 	svc := service.NewLoanRegistrationService(students, books, loans)
-	uc := usecase.NewRegisterLoan(svc)
+	uc := usecase.NewRegisterLoan(students, books, svc)
 
 	_, err := uc.Execute(context.Background(), "student-1", "book-1")
 	if err != service.ErrLoanLimitReached {
@@ -122,7 +133,7 @@ func TestRegisterLoan_RejectsWhenNoCopiesAvailable(t *testing.T) {
 	loans := &fakeLoanRepo{active: map[string]int{}}
 
 	svc := service.NewLoanRegistrationService(students, books, loans)
-	uc := usecase.NewRegisterLoan(svc)
+	uc := usecase.NewRegisterLoan(students, books, svc)
 
 	_, err := uc.Execute(context.Background(), "student-1", "book-1")
 	if err != catalogErrNoCopiesAvailable {

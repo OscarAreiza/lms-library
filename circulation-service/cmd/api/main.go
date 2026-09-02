@@ -58,7 +58,7 @@ func run() error {
 	bookClient := catalogclient.NewClient(cfg.CatalogServiceURL, cfg.JWTSecret)
 
 	loanRegistrationService := service.NewLoanRegistrationService(studentClient, bookClient, loanRepo)
-	registerLoanUseCase := usecase.NewRegisterLoan(loanRegistrationService)
+	registerLoanUseCase := usecase.NewRegisterLoan(studentClient, bookClient, loanRegistrationService)
 	loanHandler := handler.NewLoanHandler(registerLoanUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{

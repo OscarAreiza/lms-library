@@ -26,9 +26,11 @@ func NewLoanHandler(registerLoan *usecase.RegisterLoan) *LoanHandler {
 	return &LoanHandler{registerLoan: registerLoan}
 }
 
+// createLoanRequest identifies the student and book by the natural keys an
+// Administrator actually has on hand — never the internal UUID.
 type createLoanRequest struct {
-	StudentID string `json:"studentId"`
-	BookID    string `json:"bookId"`
+	StudentDocumentID string `json:"studentDocumentId"`
+	BookISBN          string `json:"bookIsbn"`
 }
 
 type loanResponse struct {
@@ -69,7 +71,7 @@ func (h *LoanHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loan, err := h.registerLoan.Execute(r.Context(), req.StudentID, req.BookID)
+	loan, err := h.registerLoan.Execute(r.Context(), req.StudentDocumentID, req.BookISBN)
 	switch {
 	case errors.Is(err, service.ErrStudentSuspended):
 		response.Error(w, http.StatusConflict, "STUDENT_SUSPENDED",
