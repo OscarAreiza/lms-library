@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/catalog"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/domain/catalog"
 )
 
 // ErrISBNAlreadyExists — FR-008: rejects registration when the ISBN is already

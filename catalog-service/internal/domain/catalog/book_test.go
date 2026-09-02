@@ -3,7 +3,7 @@ package catalog_test
 import (
 	"testing"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/catalog"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/domain/catalog"
 )
 
 func TestNewBook_InitializesAvailabilityToTotalCopies(t *testing.T) {

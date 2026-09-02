@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/catalog"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/domain/catalog"
 )
 
 // BookRepository implements catalog.BookRepository against PostgreSQL — the

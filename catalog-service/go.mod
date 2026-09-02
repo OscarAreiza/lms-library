@@ -1,4 +1,4 @@
-module github.com/OscarAreiza/lms-library/backend
+module github.com/OscarAreiza/lms-library/catalog-service
 
 go 1.25.1
 

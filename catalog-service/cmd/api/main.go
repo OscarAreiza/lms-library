@@ -1,5 +1,5 @@
-// Command api is the entry point for library-api — see
-// library-docs/09-microservices/services/01-library-api/README.md.
+// Command api is the entry point for catalog-service — see
+// library-docs/09-microservices/services/04-catalog-service/README.md.
 package main
 
 import (
@@ -11,12 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
-	"github.com/OscarAreiza/lms-library/backend/internal/config"
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http"
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/handler"
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/logger"
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/postgres"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/application/usecase"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/config"
+	httpserver "github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http/handler"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/logger"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/postgres"
 )
 
 func main() {
@@ -51,12 +51,14 @@ func run() error {
 
 	bookRepo := postgres.NewBookRepository(pool)
 	createBookUseCase := usecase.NewCreateBook(bookRepo)
-	bookHandler := handler.NewBookHandler(createBookUseCase)
+	loanBookCopyUseCase := usecase.NewLoanBookCopy(bookRepo)
+	returnBookCopyUseCase := usecase.NewReturnBookCopy(bookRepo)
+	bookHandler := handler.NewBookHandler(createBookUseCase, loanBookCopyUseCase, returnBookCopyUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
 		JWTSecret:  cfg.JWTSecret,
-		CORSOrigin: "*", // tightened once the frontend's real origin is confirmed (10-devops/environments.md)
+		CORSOrigin: cfg.CORSOrigin,
 		Books:      bookHandler,
 	})
 
@@ -67,7 +69,7 @@ func run() error {
 	}
 
 	go func() {
-		log.Infow("library-api listening", "port", cfg.Port)
+		log.Infow("catalog-service listening", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("server error", "error", err)
 		}

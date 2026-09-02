@@ -20,7 +20,8 @@ type Config struct {
 	JWTSecret string
 	JWTExpiry time.Duration
 
-	LogLevel string
+	LogLevel   string
+	CORSOrigin string
 }
 
 func Load() (*Config, error) {
@@ -41,7 +42,8 @@ func Load() (*Config, error) {
 		JWTSecret: getEnv("JWT_SECRET", ""),
 		JWTExpiry: jwtExpiry,
 
-		LogLevel: getEnv("LOG_LEVEL", "info"),
+		LogLevel:   getEnv("LOG_LEVEL", "info"),
+		CORSOrigin: getEnv("CORS_ORIGIN", "*"),
 	}
 
 	if cfg.JWTSecret == "" {

@@ -48,12 +48,6 @@ services:
       JWT_EXPIRY: ${JWT_EXPIRY:-1h}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
     depends_on:
       access-db:
         condition: service_healthy
@@ -112,12 +106,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       CIRCULATION_SERVICE_URL: http://circulation-service:8080
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
     depends_on:
       membership-db:
         condition: service_healthy
@@ -126,55 +114,55 @@ services:
     networks:
       - lms-network
 
-  # ---- Everything else (books) — still the monolith until its own
-  # extraction PR lands ----
-  db:
+  # ---- Catalog domain (HU-04) ----
+  catalog-db:
     image: postgres:16-alpine
-    container_name: lms-db
+    container_name: catalog-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lms_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
-      POSTGRES_DB: ${POSTGRES_DB:-lms_db}
+      POSTGRES_DB: catalog_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d ${POSTGRES_DB:-lms_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d catalog_db"]
       interval: 5s
       timeout: 3s
       retries: 5
     volumes:
-      - lms-db-data:/var/lib/postgresql/data
+      - catalog-db-data:/var/lib/postgresql/data
     networks:
       - lms-network
 
-  migrate:
+  catalog-migrate:
     image: migrate/migrate:v4.17.1
-    container_name: lms-migrate
+    container_name: catalog-migrate
     volumes:
-      - ./backend/migrations:/migrations
+      - ./catalog-service/migrations:/migrations
     command:
       - "-path=/migrations"
-      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@db:5432/${POSTGRES_DB:-lms_db}?sslmode=disable"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@catalog-db:5432/catalog_db?sslmode=disable"
       - "up"
     depends_on:
-      db:
+      catalog-db:
         condition: service_healthy
     networks:
       - lms-network
 
-  backend:
+  catalog-service:
     build:
-      context: ./backend
+      context: ./catalog-service
       dockerfile: Dockerfile
-    container_name: lms-backend
+    container_name: catalog-service
     environment:
-      DB_HOST: db
+      DB_HOST: catalog-db
       DB_PORT: 5432
       DB_USER: ${POSTGRES_USER:-lms_user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
-      DB_NAME: ${POSTGRES_DB:-lms_db}
+      DB_NAME: catalog_db
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       JWT_EXPIRY: ${JWT_EXPIRY:-1h}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 10s
@@ -182,9 +170,9 @@ services:
       retries: 5
       start_period: 5s
     depends_on:
-      db:
+      catalog-db:
         condition: service_healthy
-      migrate:
+      catalog-migrate:
         condition: service_completed_successfully
     networks:
       - lms-network
@@ -198,9 +186,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      - catalog-service
       - access-service
       - membership-service
-      - backend
     networks:
       - lms-network
 
@@ -221,7 +209,7 @@ services:
 volumes:
   access-db-data:
   membership-db-data:
-  lms-db-data:
+  catalog-db-data:
 
 networks:
   lms-network:

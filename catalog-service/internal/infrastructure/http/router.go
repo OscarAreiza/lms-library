@@ -7,14 +7,11 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/handler"
-	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/middleware"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http/handler"
+	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http/middleware"
 )
 
-// RouterConfig carries what the router needs to wire itself. Per-module routes
-// are added here incrementally as each domain that hasn't yet moved to its own
-// microservice is implemented — see
-// library-docs/07-api/contracts/openapi/library-api.yaml for the full contract.
+// RouterConfig carries what the router needs to wire itself.
 type RouterConfig struct {
 	DB         *pgxpool.Pool
 	JWTSecret  string
@@ -22,9 +19,8 @@ type RouterConfig struct {
 	Books      *handler.BookHandler
 }
 
-// NewRouter builds the chi router with the base middleware stack and health
-// endpoints. Protected routes are mounted under /api/v1 behind middleware.RequireAuth
-// as each module's handler is added.
+// NewRouter builds the chi router with the base middleware stack, health
+// endpoints, and the Catalog bounded context's /books routes.
 func NewRouter(cfg RouterConfig) http.Handler {
 	r := chi.NewRouter()
 
@@ -40,7 +36,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
-			protected.Post("/books", cfg.Books.Create) // HU-04
+			protected.Route("/books", func(books chi.Router) {
+				books.Post("/", cfg.Books.Create)                    // HU-04
+				books.Post("/{id}/loan-copy", cfg.Books.LoanCopy)     // needed by circulation-service
+				books.Post("/{id}/return-copy", cfg.Books.ReturnCopy) // needed by circulation-service
+			})
 		})
 	})
 
