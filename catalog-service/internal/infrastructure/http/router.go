@@ -36,7 +36,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
-			protected.Post("/books", cfg.Books.Create) // HU-04
+			protected.Route("/books", func(books chi.Router) {
+				books.Post("/", cfg.Books.Create)                    // HU-04
+				books.Post("/{id}/loan-copy", cfg.Books.LoanCopy)     // needed by circulation-service
+				books.Post("/{id}/return-copy", cfg.Books.ReturnCopy) // needed by circulation-service
+			})
 		})
 	})
 

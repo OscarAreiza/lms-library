@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/OscarAreiza/lms-library/catalog-service/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/catalog-service/internal/domain/catalog"
 	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http/middleware"
@@ -13,11 +15,13 @@ import (
 
 // BookHandler implements the /books endpoints (HU-04).
 type BookHandler struct {
-	createBook *usecase.CreateBook
+	createBook     *usecase.CreateBook
+	loanBookCopy   *usecase.LoanBookCopy
+	returnBookCopy *usecase.ReturnBookCopy
 }
 
-func NewBookHandler(createBook *usecase.CreateBook) *BookHandler {
-	return &BookHandler{createBook: createBook}
+func NewBookHandler(createBook *usecase.CreateBook, loanBookCopy *usecase.LoanBookCopy, returnBookCopy *usecase.ReturnBookCopy) *BookHandler {
+	return &BookHandler{createBook: createBook, loanBookCopy: loanBookCopy, returnBookCopy: returnBookCopy}
 }
 
 type createBookRequest struct {
@@ -80,4 +84,45 @@ func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, toBookResponse(book))
+}
+
+// LoanCopy — POST /books/{id}/loan-copy. Called by circulation-service when
+// registering a loan (HU-06); not part of the public UI-facing contract.
+func (h *BookHandler) LoanCopy(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	book, err := h.loanBookCopy.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, catalog.ErrBookNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Book not found", correlationID)
+		return
+	case errors.Is(err, catalog.ErrNoCopiesAvailable):
+		response.Error(w, http.StatusConflict, "NO_COPIES_AVAILABLE", "There are no available copies of this book", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toBookResponse(book))
+}
+
+// ReturnCopy — POST /books/{id}/return-copy. Called by circulation-service
+// when registering a return (HU-07).
+func (h *BookHandler) ReturnCopy(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	book, err := h.returnBookCopy.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, catalog.ErrBookNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Book not found", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toBookResponse(book))
 }

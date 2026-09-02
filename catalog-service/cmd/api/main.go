@@ -51,7 +51,9 @@ func run() error {
 
 	bookRepo := postgres.NewBookRepository(pool)
 	createBookUseCase := usecase.NewCreateBook(bookRepo)
-	bookHandler := handler.NewBookHandler(createBookUseCase)
+	loanBookCopyUseCase := usecase.NewLoanBookCopy(bookRepo)
+	returnBookCopyUseCase := usecase.NewReturnBookCopy(bookRepo)
+	bookHandler := handler.NewBookHandler(createBookUseCase, loanBookCopyUseCase, returnBookCopyUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
