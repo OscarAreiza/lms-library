@@ -1,6 +1,14 @@
 package access
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrAdministratorNotFound is the port-level "not found" error — use cases
+// depend on this, never on an infrastructure package's own error type
+// (library-docs/05-architecture/hexagonal-architecture.md, Dependency Rule).
+var ErrAdministratorNotFound = errors.New("administrator not found")
 
 // AdministratorRepository is the driven (secondary) port — implemented by an
 // infrastructure adapter (e.g. internal/infrastructure/postgres), never called

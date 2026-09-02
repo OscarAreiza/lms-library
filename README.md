@@ -25,10 +25,17 @@ returns, and penalties through a single-administrator interface.
 ## 📁 Structure
 
 ```
-backend/    → Go API (hexagonal: domain / application / infrastructure)
-frontend/   → React SPA (Administrator panel)
-infra/      → Deployment/reverse-proxy/CI-CD config (added later — see infra/README.md)
+access-service/  → Go API for the Access domain (HU-01, login) — first service extracted
+                    out of the monolith into its own microservice
+backend/         → Go API (hexagonal) for every other domain not yet extracted
+                    (students, books, loans)
+frontend/        → React SPA (Administrator panel)
+infra/           → Reverse-proxy (NGINX API gateway) and deployment config
 ```
+
+The migration to microservices is in progress: each domain moves out of `backend/` into its
+own service, one PR at a time, behind the NGINX gateway in `infra/nginx/nginx.conf`. Domains
+not yet migrated keep working from `backend/`, routed through the same gateway.
 
 ## 🌿 Branch strategy
 

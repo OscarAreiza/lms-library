@@ -3,7 +3,7 @@ package access_test
 import (
 	"testing"
 
-	"github.com/OscarAreiza/lms-library/backend/internal/domain/access"
+	"github.com/OscarAreiza/lms-library/access-service/internal/domain/access"
 )
 
 func TestNewAdministrator_HashesPassword(t *testing.T) {
