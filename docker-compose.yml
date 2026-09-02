@@ -1,4 +1,119 @@
 services:
+  # ---- Access domain (HU-01) ----
+  access-db:
+    image: postgres:16-alpine
+    container_name: access-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      POSTGRES_DB: access_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d access_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - access-db-data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  access-migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: access-migrate
+    volumes:
+      - ./access-service/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@access-db:5432/access_db?sslmode=disable"
+      - "up"
+    depends_on:
+      access-db:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  access-service:
+    build:
+      context: ./access-service
+      dockerfile: Dockerfile
+    container_name: access-service
+    environment:
+      DB_HOST: access-db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-lms_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      DB_NAME: access_db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    depends_on:
+      access-db:
+        condition: service_healthy
+      access-migrate:
+        condition: service_completed_successfully
+    networks:
+      - lms-network
+
+  # ---- Membership domain (HU-02) ----
+  membership-db:
+    image: postgres:16-alpine
+    container_name: membership-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      POSTGRES_DB: membership_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d membership_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - membership-db-data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  membership-migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: membership-migrate
+    volumes:
+      - ./membership-service/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@membership-db:5432/membership_db?sslmode=disable"
+      - "up"
+    depends_on:
+      membership-db:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  membership-service:
+    build:
+      context: ./membership-service
+      dockerfile: Dockerfile
+    container_name: membership-service
+    environment:
+      DB_HOST: membership-db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-lms_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      DB_NAME: membership_db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CIRCULATION_SERVICE_URL: http://circulation-service:8080
+    depends_on:
+      membership-db:
+        condition: service_healthy
+      membership-migrate:
+        condition: service_completed_successfully
+    networks:
+      - lms-network
+
   # ---- Catalog domain (HU-04) ----
   catalog-db:
     image: postgres:16-alpine
@@ -72,6 +187,8 @@ services:
       - "8080:8080"
     depends_on:
       - catalog-service
+      - access-service
+      - membership-service
     networks:
       - lms-network
 
@@ -90,6 +207,8 @@ services:
       - lms-network
 
 volumes:
+  access-db-data:
+  membership-db-data:
   catalog-db-data:
 
 networks:
