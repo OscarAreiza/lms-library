@@ -73,6 +73,19 @@ func (s *Student) IsActive() bool {
 	return s.DeactivatedAt == nil
 }
 
+// Update applies an edit to contact information (HU-03, Scenario 1). documentId is
+// intentionally not editable through this method — it is the immutable business key.
+func (s *Student) Update(fullName string, email shared.Email, phone string) error {
+	if fullName == "" {
+		return errors.New("fullName must not be empty")
+	}
+	s.FullName = fullName
+	s.Email = email
+	s.Phone = phone
+	s.UpdatedAt = time.Now().UTC()
+	return nil
+}
+
 // Deactivate soft-deletes the student (HU-03). `hasActiveLoans` must be computed by
 // the caller (a domain service) — Student cannot know about Loan directly, since Loan
 // belongs to the Circulation bounded context.

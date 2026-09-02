@@ -8,19 +8,25 @@ Part of the microservices split: this service owns the `students` table exclusiv
 PostgreSQL database, `membership_db`). It validates the JWT issued by access-service using the
 shared `JWT_SECRET` — no call to access-service is needed to check a token.
 
+Deactivating a student (HU-03) needs to know whether they have active loans — data that now
+lives in circulation-service's own database. `internal/infrastructure/circulation/client.go`
+calls circulation-service's `GET /api/v1/loans?studentId=...&status=ACTIVE` over HTTP instead
+of joining the `loans` table directly.
+
 ## Structure
 
 ```
 cmd/api/                 → entry point (main.go)
 internal/
 ├── domain/
-│   ├── membership/        → Student aggregate, ports
+│   ├── membership/        → Student aggregate, StudentRepository port, ActiveLoansChecker port
 │   └── shared/             → Value Objects (Email) — duplicated per service, no shared Go module
-├── application/usecase/  → CreateStudent (HU-02)
+├── application/usecase/  → CreateStudent (HU-02), UpdateStudent/DeactivateStudent/SearchStudents (HU-03)
 ├── config/                → environment variable loading
 └── infrastructure/
     ├── http/               → chi router, middleware, handlers (primary adapters)
     ├── postgres/            → StudentRepository (secondary adapter)
+    ├── circulation/          → HTTP client implementing ActiveLoansChecker
     └── logger/                → structured (zap) logger
 migrations/                → SQL migrations (golang-migrate)
 ```

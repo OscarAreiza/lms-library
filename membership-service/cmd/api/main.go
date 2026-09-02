@@ -13,6 +13,7 @@ import (
 
 	"github.com/OscarAreiza/lms-library/membership-service/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/membership-service/internal/config"
+	circulationclient "github.com/OscarAreiza/lms-library/membership-service/internal/infrastructure/circulation"
 	httpserver "github.com/OscarAreiza/lms-library/membership-service/internal/infrastructure/http"
 	"github.com/OscarAreiza/lms-library/membership-service/internal/infrastructure/http/handler"
 	"github.com/OscarAreiza/lms-library/membership-service/internal/infrastructure/logger"
@@ -50,9 +51,15 @@ func run() error {
 	defer pool.Close()
 
 	studentRepo := postgres.NewStudentRepository(pool)
+	circulationClient := circulationclient.NewClient(cfg.CirculationServiceURL, cfg.JWTSecret)
+
 	createStudentUseCase := usecase.NewCreateStudent(studentRepo)
 	getStudentUseCase := usecase.NewGetStudent(studentRepo)
-	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase)
+	updateStudentUseCase := usecase.NewUpdateStudent(studentRepo)
+	deactivateStudentUseCase := usecase.NewDeactivateStudent(studentRepo, circulationClient)
+	searchStudentsUseCase := usecase.NewSearchStudents(studentRepo)
+	suspendStudentUseCase := usecase.NewSuspendStudent(studentRepo)
+	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase, updateStudentUseCase, deactivateStudentUseCase, searchStudentsUseCase, suspendStudentUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,

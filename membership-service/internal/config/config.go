@@ -22,6 +22,10 @@ type Config struct {
 
 	LogLevel   string
 	CORSOrigin string
+
+	// CirculationServiceURL is where DeactivateStudent asks whether a student
+	// has active loans — Membership no longer has DB access to that table.
+	CirculationServiceURL string
 }
 
 func Load() (*Config, error) {
@@ -44,6 +48,8 @@ func Load() (*Config, error) {
 
 		LogLevel:   getEnv("LOG_LEVEL", "info"),
 		CORSOrigin: getEnv("CORS_ORIGIN", "*"),
+
+		CirculationServiceURL: getEnv("CIRCULATION_SERVICE_URL", "http://circulation-service:8080"),
 	}
 
 	if cfg.JWTSecret == "" {

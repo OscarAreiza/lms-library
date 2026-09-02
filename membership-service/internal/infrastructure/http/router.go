@@ -20,9 +20,7 @@ type RouterConfig struct {
 }
 
 // NewRouter builds the chi router with the base middleware stack, health
-// endpoints, and the Membership bounded context's /students routes. JWT
-// validation happens here using the secret shared with access-service —
-// no network call to access-service is needed to validate a token.
+// endpoints, and the Membership bounded context's /students routes.
 func NewRouter(cfg RouterConfig) http.Handler {
 	r := chi.NewRouter()
 
@@ -39,8 +37,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
 			protected.Route("/students", func(students chi.Router) {
-				students.Post("/", cfg.Students.Create) // HU-02
-				students.Get("/{id}", cfg.Students.Get) // needed by circulation-service
+				students.Post("/", cfg.Students.Create)                    // HU-02
+				students.Get("/", cfg.Students.List)                       // HU-03
+				students.Get("/{id}", cfg.Students.Get)                    // needed by circulation-service
+				students.Patch("/{id}", cfg.Students.Update)               // HU-03
+				students.Post("/{id}/deactivate", cfg.Students.Deactivate) // HU-03
+				students.Post("/{id}/suspend", cfg.Students.Suspend)       // needed by circulation-service
 			})
 		})
 	})
