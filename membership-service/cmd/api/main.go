@@ -51,7 +51,8 @@ func run() error {
 
 	studentRepo := postgres.NewStudentRepository(pool)
 	createStudentUseCase := usecase.NewCreateStudent(studentRepo)
-	studentHandler := handler.NewStudentHandler(createStudentUseCase)
+	getStudentUseCase := usecase.NewGetStudent(studentRepo)
+	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,

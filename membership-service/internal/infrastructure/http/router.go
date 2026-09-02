@@ -38,7 +38,10 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		api.Group(func(protected chi.Router) {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
-			protected.Post("/students", cfg.Students.Create) // HU-02
+			protected.Route("/students", func(students chi.Router) {
+				students.Post("/", cfg.Students.Create) // HU-02
+				students.Get("/{id}", cfg.Students.Get) // needed by circulation-service
+			})
 		})
 	})
 
