@@ -1,4 +1,67 @@
 services:
+  # ---- Access domain (HU-01) ----
+  access-db:
+    image: postgres:16-alpine
+    container_name: access-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      POSTGRES_DB: access_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d access_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - access-db-data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  access-migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: access-migrate
+    volumes:
+      - ./access-service/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@access-db:5432/access_db?sslmode=disable"
+      - "up"
+    depends_on:
+      access-db:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  access-service:
+    build:
+      context: ./access-service
+      dockerfile: Dockerfile
+    container_name: access-service
+    environment:
+      DB_HOST: access-db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-lms_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      DB_NAME: access_db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      access-db:
+        condition: service_healthy
+      access-migrate:
+        condition: service_completed_successfully
+    networks:
+      - lms-network
+
   # ---- Membership domain (HU-02) ----
   membership-db:
     image: postgres:16-alpine
@@ -62,6 +125,69 @@ services:
     networks:
       - lms-network
 
+  # ---- Everything else (books) — still the monolith until its own
+  # extraction PR lands ----
+  db:
+    image: postgres:16-alpine
+    container_name: lms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      POSTGRES_DB: ${POSTGRES_DB:-lms_db}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lms_user} -d ${POSTGRES_DB:-lms_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - lms-db-data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: lms-migrate
+    volumes:
+      - ./backend/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-lms_user}:${POSTGRES_PASSWORD:-lms_password}@db:5432/${POSTGRES_DB:-lms_db}?sslmode=disable"
+      - "up"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lms-backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-lms_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-lms_password}
+      DB_NAME: ${POSTGRES_DB:-lms_db}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - lms-network
+
   # ---- Edge ----
   nginx:
     image: nginx:alpine
@@ -71,7 +197,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      - access-service
       - membership-service
+      - backend
     networks:
       - lms-network
 
@@ -90,7 +218,9 @@ services:
       - lms-network
 
 volumes:
+  access-db-data:
   membership-db-data:
+  lms-db-data:
 
 networks:
   lms-network:
