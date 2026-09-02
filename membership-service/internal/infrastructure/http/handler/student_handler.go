@@ -18,6 +18,7 @@ import (
 // StudentHandler implements the /students endpoints (HU-02, HU-03).
 type StudentHandler struct {
 	createStudent     *usecase.CreateStudent
+	getStudent        *usecase.GetStudent
 	updateStudent     *usecase.UpdateStudent
 	deactivateStudent *usecase.DeactivateStudent
 	searchStudents    *usecase.SearchStudents
@@ -25,12 +26,14 @@ type StudentHandler struct {
 
 func NewStudentHandler(
 	createStudent *usecase.CreateStudent,
+	getStudent *usecase.GetStudent,
 	updateStudent *usecase.UpdateStudent,
 	deactivateStudent *usecase.DeactivateStudent,
 	searchStudents *usecase.SearchStudents,
 ) *StudentHandler {
 	return &StudentHandler{
 		createStudent:     createStudent,
+		getStudent:        getStudent,
 		updateStudent:     updateStudent,
 		deactivateStudent: deactivateStudent,
 		searchStudents:    searchStudents,
@@ -111,6 +114,26 @@ func (h *StudentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, toStudentResponse(student))
+}
+
+// Get — GET /students/{id}. Used by circulation-service to check a student's
+// suspension status before registering a loan (HU-06) — Membership can't be
+// queried by SQL join anymore now that Loan lives in a different database.
+func (h *StudentHandler) Get(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	student, err := h.getStudent.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, membership.ErrStudentNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Student not found", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toStudentResponse(student))
 }
 
 // List — GET /students (HU-03, search half).

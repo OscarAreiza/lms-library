@@ -54,10 +54,11 @@ func run() error {
 	circulationClient := circulationclient.NewClient(cfg.CirculationServiceURL, cfg.JWTSecret)
 
 	createStudentUseCase := usecase.NewCreateStudent(studentRepo)
+	getStudentUseCase := usecase.NewGetStudent(studentRepo)
 	updateStudentUseCase := usecase.NewUpdateStudent(studentRepo)
 	deactivateStudentUseCase := usecase.NewDeactivateStudent(studentRepo, circulationClient)
 	searchStudentsUseCase := usecase.NewSearchStudents(studentRepo)
-	studentHandler := handler.NewStudentHandler(createStudentUseCase, updateStudentUseCase, deactivateStudentUseCase, searchStudentsUseCase)
+	studentHandler := handler.NewStudentHandler(createStudentUseCase, getStudentUseCase, updateStudentUseCase, deactivateStudentUseCase, searchStudentsUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,
