@@ -11,9 +11,9 @@ import (
 // library-docs/01-context/scope.md, Scope assumption #2, and
 // library-docs/02-domain/entities-and-rules.md INV-001/INV-006 on Loan.
 const (
-	LoanPeriodDays    = 7
-	SuspensionDays    = 7
-	MaxActiveLoans    = 2
+	LoanPeriodDays = 7
+	SuspensionDays = 7
+	MaxActiveLoans = 2
 )
 
 // Status values for Loan.Status.

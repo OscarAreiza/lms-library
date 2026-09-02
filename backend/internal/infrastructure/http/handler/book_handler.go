@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/OscarAreiza/lms-library/backend/internal/application/usecase"
 	"github.com/OscarAreiza/lms-library/backend/internal/domain/catalog"
 	"github.com/OscarAreiza/lms-library/backend/internal/infrastructure/http/middleware"
@@ -13,11 +15,12 @@ import (
 
 // BookHandler implements the /books endpoints (HU-04).
 type BookHandler struct {
-	createBook *usecase.CreateBook
+	createBook    *usecase.CreateBook
+	getBookByISBN *usecase.GetBookByISBN
 }
 
-func NewBookHandler(createBook *usecase.CreateBook) *BookHandler {
-	return &BookHandler{createBook: createBook}
+func NewBookHandler(createBook *usecase.CreateBook, getBookByISBN *usecase.GetBookByISBN) *BookHandler {
+	return &BookHandler{createBook: createBook, getBookByISBN: getBookByISBN}
 }
 
 type createBookRequest struct {
@@ -80,4 +83,25 @@ func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, toBookResponse(book))
+}
+
+// GetByISBN — GET /books/by-isbn/{isbn}. Lets a caller resolve a book by the
+// natural key an Administrator actually has on hand (the ISBN), instead of
+// the internal UUID — used by circulation-service's loan registration and
+// by the frontend loan form.
+func (h *BookHandler) GetByISBN(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	isbn := chi.URLParam(r, "isbn")
+
+	book, err := h.getBookByISBN.Execute(r.Context(), isbn)
+	switch {
+	case errors.Is(err, catalog.ErrBookNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Book not found", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toBookResponse(book))
 }

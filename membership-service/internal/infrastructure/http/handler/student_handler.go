@@ -16,12 +16,13 @@ import (
 
 // StudentHandler implements the /students endpoints (HU-02).
 type StudentHandler struct {
-	createStudent *usecase.CreateStudent
-	getStudent    *usecase.GetStudent
+	createStudent          *usecase.CreateStudent
+	getStudent             *usecase.GetStudent
+	getStudentByDocumentID *usecase.GetStudentByDocumentID
 }
 
-func NewStudentHandler(createStudent *usecase.CreateStudent, getStudent *usecase.GetStudent) *StudentHandler {
-	return &StudentHandler{createStudent: createStudent, getStudent: getStudent}
+func NewStudentHandler(createStudent *usecase.CreateStudent, getStudent *usecase.GetStudent, getStudentByDocumentID *usecase.GetStudentByDocumentID) *StudentHandler {
+	return &StudentHandler{createStudent: createStudent, getStudent: getStudent, getStudentByDocumentID: getStudentByDocumentID}
 }
 
 type createStudentRequest struct {
@@ -102,6 +103,27 @@ func (h *StudentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	student, err := h.getStudent.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, membership.ErrStudentNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Student not found", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toStudentResponse(student))
+}
+
+// GetByDocumentID — GET /students/by-document/{documentId}. Lets a caller
+// resolve a student by the natural key an Administrator actually has on
+// hand (the institutional document ID), instead of the internal UUID — used
+// by circulation-service's loan registration and by the frontend loan form.
+func (h *StudentHandler) GetByDocumentID(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	documentID := chi.URLParam(r, "documentId")
+
+	student, err := h.getStudentByDocumentID.Execute(r.Context(), documentID)
 	switch {
 	case errors.Is(err, membership.ErrStudentNotFound):
 		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Student not found", correlationID)

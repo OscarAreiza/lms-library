@@ -39,8 +39,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 			protected.Use(middleware.RequireAuth(cfg.JWTSecret))
 
 			protected.Route("/students", func(students chi.Router) {
-				students.Post("/", cfg.Students.Create) // HU-02
-				students.Get("/{id}", cfg.Students.Get) // needed by circulation-service
+				students.Post("/", cfg.Students.Create)                                 // HU-02
+				students.Get("/{id}", cfg.Students.Get)                                 // needed by circulation-service
+				students.Get("/by-document/{documentId}", cfg.Students.GetByDocumentID) // loan registration by natural key
 			})
 		})
 	})
