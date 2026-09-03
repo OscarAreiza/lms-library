@@ -12,7 +12,7 @@ returns, and penalties through a single-administrator interface.
 
 * **Frontend:** React + Vite + TypeScript + Tailwind CSS
 * **Backend:** Go (Golang) — Hexagonal Architecture
-* **Database:** PostgreSQL
+* **Database:** PostgreSQL MongoDB
 * **Reverse proxy:** NGINX (production topology — see `library-docs/05-architecture/decisions/records/ADR-003-nginx-reverse-proxy.md`)
 * **Infrastructure:** Docker / Docker Compose
 
