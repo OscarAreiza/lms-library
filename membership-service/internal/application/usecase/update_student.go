@@ -9,10 +9,10 @@ import (
 
 // UpdateStudent implements HU-03, Scenario 1 (edit contact information).
 type UpdateStudent struct {
-	Students membership.StudentRepository
+	Students membership.StudentEditor
 }
 
-func NewUpdateStudent(students membership.StudentRepository) *UpdateStudent {
+func NewUpdateStudent(students membership.StudentEditor) *UpdateStudent {
 	return &UpdateStudent{Students: students}
 }
 

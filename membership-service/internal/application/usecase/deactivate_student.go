@@ -13,11 +13,11 @@ import (
 // the microservices split this was an in-process repository call; now it's
 // an HTTP call to circulation-service (membership.ActiveLoansChecker).
 type DeactivateStudent struct {
-	Students    membership.StudentRepository
+	Students    membership.StudentEditor
 	LoanChecker membership.ActiveLoansChecker
 }
 
-func NewDeactivateStudent(students membership.StudentRepository, loanChecker membership.ActiveLoansChecker) *DeactivateStudent {
+func NewDeactivateStudent(students membership.StudentEditor, loanChecker membership.ActiveLoansChecker) *DeactivateStudent {
 	return &DeactivateStudent{Students: students, LoanChecker: loanChecker}
 }
 

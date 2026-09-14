@@ -8,10 +8,10 @@ import (
 
 // SearchStudents implements the list/search half of HU-03.
 type SearchStudents struct {
-	Students membership.StudentRepository
+	Students membership.StudentSearcher
 }
 
-func NewSearchStudents(students membership.StudentRepository) *SearchStudents {
+func NewSearchStudents(students membership.StudentSearcher) *SearchStudents {
 	return &SearchStudents{Students: students}
 }
 
