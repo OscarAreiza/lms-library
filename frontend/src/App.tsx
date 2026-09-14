@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { StudentsListPage } from './pages/students/StudentsListPage'
+import { StudentFormPage } from './pages/students/StudentFormPage'
 import { BooksListPage } from './pages/books/BooksListPage'
 import { BookFormPage } from './pages/books/BookFormPage'
 import { LoansListPage } from './pages/loans/LoansListPage'
@@ -22,6 +23,7 @@ function App() {
 
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/students" element={<ProtectedRoute><StudentsListPage /></ProtectedRoute>} />
+        <Route path="/students/new" element={<ProtectedRoute><StudentFormPage /></ProtectedRoute>} />
         <Route path="/books" element={<ProtectedRoute><BooksListPage /></ProtectedRoute>} />
         <Route path="/books/new" element={<ProtectedRoute><BookFormPage /></ProtectedRoute>} />
         <Route path="/loans" element={<ProtectedRoute><LoansListPage /></ProtectedRoute>} />
