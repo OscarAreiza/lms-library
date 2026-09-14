@@ -14,10 +14,10 @@ var ErrDocumentIDAlreadyExists = errors.New("document id already exists")
 
 // CreateStudent implements HU-02's acceptance criteria.
 type CreateStudent struct {
-	Students membership.StudentRepository
+	Students membership.StudentRegistrar
 }
 
-func NewCreateStudent(students membership.StudentRepository) *CreateStudent {
+func NewCreateStudent(students membership.StudentRegistrar) *CreateStudent {
 	return &CreateStudent{Students: students}
 }
 
