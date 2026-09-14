@@ -9,10 +9,10 @@ import (
 // SearchBooks implements HU-05's acceptance criteria — an empty result set is a
 // valid outcome (Scenario 2), never an error.
 type SearchBooks struct {
-	Books catalog.BookRepository
+	Books catalog.BookSearcher
 }
 
-func NewSearchBooks(books catalog.BookRepository) *SearchBooks {
+func NewSearchBooks(books catalog.BookSearcher) *SearchBooks {
 	return &SearchBooks{Books: books}
 }
 
