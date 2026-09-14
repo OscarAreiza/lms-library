@@ -13,10 +13,10 @@ var ErrISBNAlreadyExists = errors.New("isbn already exists")
 
 // CreateBook implements HU-04's acceptance criteria.
 type CreateBook struct {
-	Books catalog.BookRepository
+	Books catalog.BookRegistrar
 }
 
-func NewCreateBook(books catalog.BookRepository) *CreateBook {
+func NewCreateBook(books catalog.BookRegistrar) *CreateBook {
 	return &CreateBook{Books: books}
 }
 

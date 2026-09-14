@@ -9,3 +9,11 @@ type BookRepository interface {
 	Search(ctx context.Context, query, category string, page, limit int) (books []*Book, total int, err error)
 	Save(ctx context.Context, b *Book) error
 }
+
+// BookRegistrar is the narrow port HU-04's CreateBook actually needs — ISP: a
+// consumer should not depend on FindByID/Search it never calls. Any
+// BookRepository implementation satisfies this automatically.
+type BookRegistrar interface {
+	FindByISBN(ctx context.Context, isbn string) (*Book, error)
+	Save(ctx context.Context, b *Book) error
+}
