@@ -9,3 +9,11 @@ type LoanRepository interface {
 	Search(ctx context.Context, status string, overdueOnly bool, studentID, bookID string, page, limit int) (loans []*Loan, total int, err error)
 	Save(ctx context.Context, l *Loan) error
 }
+
+// LoanSearcher is the narrow port HU-07's SearchLoans (reused by HU-08's
+// overdue report) actually needs — ISP: it never reads or writes a single
+// Loan by ID, and never counts a student's active loans. Any LoanRepository
+// implementation satisfies this automatically.
+type LoanSearcher interface {
+	Search(ctx context.Context, status string, overdueOnly bool, studentID, bookID string, page, limit int) (loans []*Loan, total int, err error)
+}

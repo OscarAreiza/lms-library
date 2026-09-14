@@ -8,13 +8,13 @@ import (
 )
 
 // ReturnLoan implements HU-07's acceptance criteria — a thin wrapper around
-// LoanRegistrationService.RegisterReturn, which also triggers the HU-08
+// ReturnRegistrationService.RegisterReturn, which also triggers the HU-08
 // suspension policy when the return is late.
 type ReturnLoan struct {
-	service *service.LoanRegistrationService
+	service *service.ReturnRegistrationService
 }
 
-func NewReturnLoan(svc *service.LoanRegistrationService) *ReturnLoan {
+func NewReturnLoan(svc *service.ReturnRegistrationService) *ReturnLoan {
 	return &ReturnLoan{service: svc}
 }
 

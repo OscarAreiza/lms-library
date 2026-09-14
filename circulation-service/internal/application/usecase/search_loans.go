@@ -9,10 +9,10 @@ import (
 // SearchLoans implements the history/query half of HU-07 (and is reused by
 // HU-08 with overdueOnly=true).
 type SearchLoans struct {
-	Loans circulation.LoanRepository
+	Loans circulation.LoanSearcher
 }
 
-func NewSearchLoans(loans circulation.LoanRepository) *SearchLoans {
+func NewSearchLoans(loans circulation.LoanSearcher) *SearchLoans {
 	return &SearchLoans{Loans: loans}
 }
 
