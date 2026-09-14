@@ -57,8 +57,8 @@ func run() error {
 	studentClient := membershipclient.NewClient(cfg.MembershipServiceURL, cfg.JWTSecret)
 	bookClient := catalogclient.NewClient(cfg.CatalogServiceURL, cfg.JWTSecret)
 
-	loanRegistrationService := service.NewLoanRegistrationService(studentClient, bookClient, loanRepo)
-	returnLoanUseCase := usecase.NewReturnLoan(loanRegistrationService)
+	returnRegistrationService := service.NewReturnRegistrationService(loanRepo, studentClient, bookClient)
+	returnLoanUseCase := usecase.NewReturnLoan(returnRegistrationService)
 	overdueLoansUseCase := usecase.NewOverdueLoans(loanRepo)
 	loanHandler := handler.NewLoanHandler(returnLoanUseCase, overdueLoansUseCase)
 

@@ -87,18 +87,19 @@ func (f *fakeLoanRepo) Save(_ context.Context, l *circulation.Loan) error {
 	return nil
 }
 
-func setupLoanFixture(t *testing.T) (*service.LoanRegistrationService, *circulation.Loan, *fakeStudentClient, *fakeBookClient, *fakeLoanRepo) {
+// setupLoanFixture creates a loan directly (bypassing HU-06's own
+// RegisterLoan flow, which lives on a separate branch/usecase) so
+// ReturnRegistrationService has something to return.
+func setupLoanFixture(t *testing.T) (*service.ReturnRegistrationService, *circulation.Loan, *fakeStudentClient, *fakeBookClient, *fakeLoanRepo) {
 	t.Helper()
 	students := &fakeStudentClient{eligible: map[string]bool{}}
-	books := &fakeBookClient{availableCopies: map[string]int{"book-1": 1}}
+	books := &fakeBookClient{availableCopies: map[string]int{"book-1": 0}}
 	loans := &fakeLoanRepo{byID: map[string]*circulation.Loan{}, active: map[string]int{}}
 
-	svc := service.NewLoanRegistrationService(students, books, loans)
-	loan, err := svc.RegisterLoan(context.Background(), "student-1", "book-1")
-	if err != nil {
-		t.Fatalf("unexpected error setting up loan fixture: %v", err)
-	}
+	loan := circulation.NewLoan("student-1", "book-1")
 	loans.byID[loan.ID] = loan
+
+	svc := service.NewReturnRegistrationService(loans, students, books)
 	return svc, loan, students, books, loans
 }
 

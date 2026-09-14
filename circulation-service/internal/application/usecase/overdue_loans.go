@@ -9,10 +9,10 @@ import (
 // OverdueLoans implements HU-08's "Overdue Loans" report (Scenario 2): active
 // loans whose due date has already passed.
 type OverdueLoans struct {
-	Loans circulation.LoanRepository
+	Loans circulation.LoanSearcher
 }
 
-func NewOverdueLoans(loans circulation.LoanRepository) *OverdueLoans {
+func NewOverdueLoans(loans circulation.LoanSearcher) *OverdueLoans {
 	return &OverdueLoans{Loans: loans}
 }
 
