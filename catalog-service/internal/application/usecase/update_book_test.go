@@ -8,35 +8,8 @@ import (
 	"github.com/OscarAreiza/lms-library/catalog-service/internal/domain/catalog"
 )
 
-// fakeBookRepository — Fake test double (11-quality/tdd-guide.md).
-type fakeBookRepository struct {
-	byID map[string]*catalog.Book
-}
-
-func newFakeBookRepository() *fakeBookRepository {
-	return &fakeBookRepository{byID: map[string]*catalog.Book{}}
-}
-
-func (f *fakeBookRepository) FindByID(_ context.Context, id string) (*catalog.Book, error) {
-	b, ok := f.byID[id]
-	if !ok {
-		return nil, catalog.ErrBookNotFound
-	}
-	return b, nil
-}
-
-func (f *fakeBookRepository) FindByISBN(_ context.Context, _ string) (*catalog.Book, error) {
-	return nil, catalog.ErrBookNotFound
-}
-
-func (f *fakeBookRepository) Search(_ context.Context, _, _ string, _, _ int) ([]*catalog.Book, int, error) {
-	return nil, 0, nil
-}
-
-func (f *fakeBookRepository) Save(_ context.Context, b *catalog.Book) error {
-	f.byID[b.ID] = b
-	return nil
-}
+// fakeBookRepository is declared once in create_book_test.go (same package) —
+// reused here rather than redeclared, per Go's one-declaration-per-package rule.
 
 func seedFakeBook(t *testing.T, repo *fakeBookRepository) *catalog.Book {
 	t.Helper()

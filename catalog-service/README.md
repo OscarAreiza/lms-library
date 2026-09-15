@@ -14,7 +14,7 @@ shared `JWT_SECRET` — no call to access-service is needed to check a token.
 cmd/api/                 → entry point (main.go)
 internal/
 ├── domain/catalog/        → Book aggregate, ports
-├── application/usecase/  → UpdateBook (HU-09)
+├── application/usecase/  → CreateBook (HU-04), UpdateBook (HU-09)
 ├── config/                → environment variable loading
 └── infrastructure/
     ├── http/               → chi router, middleware, handlers (primary adapters)

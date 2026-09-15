@@ -13,15 +13,25 @@ import (
 	"github.com/OscarAreiza/lms-library/catalog-service/internal/infrastructure/http/response"
 )
 
-const timeFormat = "2006-01-02T15:04:05Z07:00"
-
-// BookHandler implements the /books endpoints relevant to HU-09.
+// BookHandler implements the /books endpoints (HU-04, HU-09).
 type BookHandler struct {
-	updateBook *usecase.UpdateBook
+	createBook     *usecase.CreateBook
+	updateBook     *usecase.UpdateBook
+	loanBookCopy   *usecase.LoanBookCopy
+	returnBookCopy *usecase.ReturnBookCopy
 }
 
-func NewBookHandler(updateBook *usecase.UpdateBook) *BookHandler {
-	return &BookHandler{updateBook: updateBook}
+func NewBookHandler(createBook *usecase.CreateBook, updateBook *usecase.UpdateBook, loanBookCopy *usecase.LoanBookCopy, returnBookCopy *usecase.ReturnBookCopy) *BookHandler {
+	return &BookHandler{createBook: createBook, updateBook: updateBook, loanBookCopy: loanBookCopy, returnBookCopy: returnBookCopy}
+}
+
+type createBookRequest struct {
+	Title       string `json:"title"`
+	Author      string `json:"author"`
+	ISBN        string `json:"isbn"`
+	Category    string `json:"category"`
+	Year        int    `json:"year"`
+	TotalCopies int    `json:"totalCopies"`
 }
 
 type updateBookRequest struct {
@@ -30,6 +40,8 @@ type updateBookRequest struct {
 	Category string `json:"category"`
 	Year     int    `json:"year"`
 }
+
+const timeFormat = "2006-01-02T15:04:05Z07:00"
 
 type bookResponse struct {
 	ID              string `json:"id"`
@@ -59,6 +71,29 @@ func toBookResponse(b *catalog.Book) bookResponse {
 	}
 }
 
+// Create — POST /books (HU-04, FR-007, FR-008).
+func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+
+	var req createBookRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request body", correlationID)
+		return
+	}
+
+	book, err := h.createBook.Execute(r.Context(), req.Title, req.Author, req.ISBN, req.Category, req.Year, req.TotalCopies)
+	switch {
+	case errors.Is(err, usecase.ErrISBNAlreadyExists):
+		response.Error(w, http.StatusConflict, "ISBN_ALREADY_EXISTS", "This ISBN is already registered", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusCreated, toBookResponse(book))
+}
+
 // Update — PATCH /books/{id} (HU-09, FR-011, FR-012). ISBN is not in
 // updateBookRequest on purpose — see usecase.UpdateBook's doc comment.
 func (h *BookHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +113,47 @@ func (h *BookHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	case err != nil:
 		response.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toBookResponse(book))
+}
+
+// LoanCopy — POST /books/{id}/loan-copy. Called by circulation-service when
+// registering a loan (HU-06); not part of the public UI-facing contract.
+func (h *BookHandler) LoanCopy(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	book, err := h.loanBookCopy.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, catalog.ErrBookNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Book not found", correlationID)
+		return
+	case errors.Is(err, catalog.ErrNoCopiesAvailable):
+		response.Error(w, http.StatusConflict, "NO_COPIES_AVAILABLE", "There are no available copies of this book", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, toBookResponse(book))
+}
+
+// ReturnCopy — POST /books/{id}/return-copy. Called by circulation-service
+// when registering a return (HU-07).
+func (h *BookHandler) ReturnCopy(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.FromContext(r.Context())
+	id := chi.URLParam(r, "id")
+
+	book, err := h.returnBookCopy.Execute(r.Context(), id)
+	switch {
+	case errors.Is(err, catalog.ErrBookNotFound):
+		response.Error(w, http.StatusNotFound, "NOT_FOUND", "Book not found", correlationID)
+		return
+	case err != nil:
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error", correlationID)
 		return
 	}
 

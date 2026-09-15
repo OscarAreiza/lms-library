@@ -50,8 +50,11 @@ func run() error {
 	defer pool.Close()
 
 	bookRepo := postgres.NewBookRepository(pool)
+	createBookUseCase := usecase.NewCreateBook(bookRepo)
 	updateBookUseCase := usecase.NewUpdateBook(bookRepo)
-	bookHandler := handler.NewBookHandler(updateBookUseCase)
+	loanBookCopyUseCase := usecase.NewLoanBookCopy(bookRepo)
+	returnBookCopyUseCase := usecase.NewReturnBookCopy(bookRepo)
+	bookHandler := handler.NewBookHandler(createBookUseCase, updateBookUseCase, loanBookCopyUseCase, returnBookCopyUseCase)
 
 	router := httpserver.NewRouter(httpserver.RouterConfig{
 		DB:         pool,

@@ -13,10 +13,10 @@ import (
 // (library-docs/07-api/contracts/openapi/library-api.yaml, UpdateBookRequest)
 // only exposes title/author/category/year.
 type UpdateBook struct {
-	Books catalog.BookRepository
+	Books catalog.BookEditor
 }
 
-func NewUpdateBook(books catalog.BookRepository) *UpdateBook {
+func NewUpdateBook(books catalog.BookEditor) *UpdateBook {
 	return &UpdateBook{Books: books}
 }
 

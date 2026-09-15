@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
@@ -52,9 +53,14 @@ export function BooksListPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Catalog</h1>
-        <p className="text-sm text-slate-500">Edit book information. ISBN is fixed at registration.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Catalog</h1>
+          <p className="text-sm text-slate-500">Edit book information. ISBN is fixed at registration.</p>
+        </div>
+        <Link to="/books/new">
+          <Button>Register book</Button>
+        </Link>
       </div>
 
       {error && (
